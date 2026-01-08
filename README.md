@@ -9,7 +9,7 @@ Go to `Privacy & Security > Bluetooth.`
 #### Getting Started
 ```shell
 source .venv/bin/activate
-pip install asyncio bleak rich manuf bluetooth-numbers
+pip install asyncio bleak rich manuf bluetooth-numbers geocoder
 python3 bluesnoop.py
 ```
 
@@ -33,3 +33,6 @@ Since F and 0 are not valid RFC 4122 versions (1-5), Python throws a ValueError:
 
 Explore more on the following:
 `discovered_devices_and_advertisement_data` // https://bleak.readthedocs.io/en/latest/api/scanner.html#bleak.BleakScanner.discovered_devices // 16:20 @ 1/8/26 BW
+
+
+### Interpreting Bluetooth UUID Numbers 

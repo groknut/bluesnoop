@@ -7,7 +7,7 @@ from bleak import BleakScanner
 from rich.console import Console
 from rich.table import Table
 from rich.live import Live
-from bluetooth_numbers import oui
+from bluetooth_numbers import service, exceptions
 from uuid import UUID
 
 # Import from your menu module
@@ -77,22 +77,22 @@ async def run_scanner(duration=None):
                 devices = await BleakScanner.discover(timeout=2.0)
                 current_ts = datetime.now().strftime("%H:%M:%S")
 
-                manuf_data = d.metadata.get('manufacturer_data', {})
-
-                if manuf_data:
-                    # The keys in this dict are the SIG Company IDs
-                    company_ids = list(manuf_data.keys())
-                    # Example: 76 = Apple, 117 = Samsung, 6 = Microsoft
-                    print(f"Device {d.address} is from Company ID: {company_ids[0]}")
-
                 for d in devices:
                     uid = d.address
+
                     name = str(d.name) if d.name else "Unknown"
+
+                    try:
+                        manufacturer = service[UUID(name)]
+                    except KeyError:
+                        manufacturer = "Unknown"
+                    except exceptions.InvalidUUIDError:
+                        manufacturer = "Unknown"
 
                     if uid not in GLOBAL_HISTORY:
                         GLOBAL_HISTORY[uid] = {
                             "name": name,
-                            "manuf": get_hardcoded_manuf_name(name),
+                            "manuf": manufacturer,
                             "first_seen": current_ts,
                             "last_seen": current_ts,
                             "sighting_count": 1
@@ -111,9 +111,10 @@ async def run_scanner(duration=None):
                 new_table.add_column("Target Manuf", style="yellow")
 
                 try:
-                    manufacturer = oui[UUID(name)]
-                    print(f"Target identified: {manufacturer}")
+                    manufacturer = service[UUID(name)]
                 except KeyError:
+                    manufacturer = "Unknown"
+                except exceptions.InvalidUUIDError:
                     manufacturer = "Unknown"
 
                 for uid, info in GLOBAL_HISTORY.items():
