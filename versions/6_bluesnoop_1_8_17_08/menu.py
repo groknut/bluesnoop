@@ -1,10 +1,17 @@
 import os
+import json
+import csv
+import time
+from datetime import datetime
 from rich.console import Console
 from rich.panel import Panel
 from rich.align import Align
 from rich.text import Text
+from rich.table import Table
 
 console = Console()
+
+# --- HISTORY & EXPORT LOGIC ---
 
 def display_history_table(data):
     table = Table(title="Captured Device History")
@@ -12,19 +19,35 @@ def display_history_table(data):
     table.add_column("Name", style="green")
     table.add_column("First Seen", style="dim")
     table.add_column("Last Seen", style="dim")
-    table.add_column("Peak RSSI", justify="right")
 
     for uid, info in data.items():
         table.add_row(
             uid,
             str(info['name']),
             info['first_seen'],
-            info['last_seen'],
-            f"{info['max_rssi']} dBm"
+            info['last_seen']
         )
 
     console.print(table)
     input("\nPress Enter to return to History Menu...")
+
+def export_intel(data, format_type):
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"BLUESNOOP_DUMP_{ts}.{format_type}"
+
+    if format_type == "json":
+        with open(filename, "w") as f:
+            json.dump(data, f, indent=4)
+    else:
+        # CSV Export Logic
+        with open(filename, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["UUID", "Name", "First Seen", "Last Seen"])
+            for uid, info in data.items():
+                writer.writerow([uid, info['name'], info['first_seen'], info['last_seen']])
+
+    console.print(f"[bold green]✔[/bold green] Success: Intel exported to {filename}")
+    time.sleep(2)
 
 def show_history_menu(history_data):
     if not history_data:
@@ -54,23 +77,7 @@ def show_history_menu(history_data):
         elif sub_choice == "4":
             break
 
-def export_intel(data, format_type):
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"BLUESNOOP_DUMP_{ts}.{format_type}"
-
-    if format_type == "json":
-        with open(filename, "w") as f:
-            json.dump(data, f, indent=4)
-    else:
-        # CSV Export Logic
-        with open(filename, "w", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(["UUID", "Name", "First Seen", "Last Seen", "Max RSSI"])
-            for uid, info in data.items():
-                writer.writerow([uid, info['name'], info['first_seen'], info['last_seen'], info['max_rssi']])
-
-    console.print(f"[bold green]✔[/bold green] Success: Intel exported to {filename}")
-    time.sleep(2)
+# --- CORE UI ELEMENTS ---
 
 def display_banner():
     """Reads the banner from banner.txt and displays it."""
@@ -79,7 +86,7 @@ def display_banner():
         with open(banner_path, "r", encoding="utf-8") as f:
             banner_content = f.read()
     except FileNotFoundError:
-        banner_content = "BLUETOOTH SNOOPER\n[File banner.txt not found]"
+        banner_content = "BLUESNOOP\n[File banner.txt not found]"
 
     banner_text = Text(banner_content, style="bold cyan")
     console.print(banner_text)
@@ -100,29 +107,29 @@ def get_snoop_time():
             console.print("[bold red]![/bold red] Max limit exceeded. Setting to 300s.")
             return 300
         if seconds <= 0:
-            console.print("[bold red]![/bold red] Invalid time. Setting to 30s.")
             return 30
         return seconds
     except ValueError:
-        console.print("[bold red]![/bold red] Non-numeric input. Using default 30s.")
         return 30
 
 def show_about_screen():
     about_text = """
-    [bold cyan]Bluetooth Snooper v1.0[/bold cyan]
+    [bold cyan]BLUESNOOP v1.0[/bold cyan]
     
-    This utility is designed for lightweight signal intelligence.
-    It maps nearby BLE devices using their UUID and broadcast names.
+    A lightweight Bluetooth Signal Intelligence (SIGINT) utility.
     
-    [bold yellow]Modes:[/bold yellow]
-    - [bold]Timed Snoop:[/bold] Snapshot reconnaissance with custom duration.
-    - [bold]Limitless:[/bold] Continuous tracking until manually stopped.
+    [bold yellow]Capabilities:[/bold yellow]
+    - [bold]Passive Recon:[/bold] Identify nearby device UUIDs and Names.
+    - [bold]Session Memory:[/bold] Persistent tracking of first/last appearance.
+    - [bold]Friendly Mapping:[/bold] Translation of cryptic model IDs.
+    - [bold]Data Dumping:[/bold] Export intelligence for external analysis.
     """
-    console.print(Panel(about_text, title="About"))
+    console.print(Panel(about_text, title="Intel Briefing", border_style="bright_black"))
     input("\nPress Enter to return to menu...")
 
 def print_menu_options():
-    console.print("[bold]1.[/bold]  Timed Snoop")
-    console.print("[bold]2.[/bold]  Limitless Snoop")
-    console.print("[bold]3.[/bold]  About")
-    console.print("[bold]4.[/bold]  Quit")
+    console.print("[bold]1.[/bold]  ⏱️  Timed Snoop")
+    console.print("[bold]2.[/bold]  ♾️  Limitless Snoop")
+    console.print("[bold]3.[/bold]  🗂️  View/Export History")
+    console.print("[bold]4.[/bold]  ℹ️  About")
+    console.print("[bold]5.[/bold]  ❌ Quit")

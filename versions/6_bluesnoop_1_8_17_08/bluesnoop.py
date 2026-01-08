@@ -9,7 +9,7 @@ from rich.table import Table
 from rich.live import Live
 
 # Import from your menu module
-from menu import display_banner, show_about_screen, print_menu_options, get_snoop_time
+from menu import display_banner, show_about_screen, print_menu_options, get_snoop_time, show_history_menu
 
 console = Console()
 
@@ -59,63 +59,62 @@ async def run_scanner(duration=None):
     start_time = time.time()
     table = Table()
 
-    with Live(table, refresh_per_second=1, screen=True) as live:
-        while True:
-            # 1. Timing Logic
-            if duration:
-                elapsed = time.time() - start_time
-                if elapsed >= duration:
-                    break
-                title = f"\n🦉 BLUESNOOP | TIMED: {int(duration - elapsed)}s left"
-            else:
-                title = "\n🦉 BLUESNOOP | LIMITLESS (Ctrl+C to stop)"
-
-            # 2. Perform the Scan
-            # Discover finds all devices currently broadcasting
-            devices = await BleakScanner.discover(timeout=2.0)
-            current_ts = datetime.now().strftime("%H:%M:%S")
-
-            # 3. Intelligence Update (No RSSI)
-            for d in devices:
-                uid = d.address
-                name = str(d.name) if d.name else "Unknown"
-
-                if uid not in GLOBAL_HISTORY:
-                    # Target's first appearance
-                    GLOBAL_HISTORY[uid] = {
-                        "name": name,
-                        "manuf": get_hardcoded_manuf_name(name),
-                        "first_seen": current_ts,
-                        "last_seen": current_ts,
-                        "sighting_count": 1
-                    }
+    # Wrap the entire scanner in a try block
+    try:
+        with Live(table, refresh_per_second=1, screen=True) as live:
+            while True:
+                if duration:
+                    elapsed = time.time() - start_time
+                    if elapsed >= duration:
+                        break
+                    title = f"🦉 BLUESNOOP | TIMED: {int(duration - elapsed)}s left"
                 else:
-                    # Target is still present - update last seen and count
-                    GLOBAL_HISTORY[uid]["last_seen"] = current_ts
-                    GLOBAL_HISTORY[uid]["sighting_count"] += 1
+                    title = "🦉 BLUESNOOP | LIMITLESS (Ctrl+C to stop)"
 
-            # 4. Interface Refresh
-            new_table = Table(title=title, border_style="bright_black")
-            new_table.add_column("First Seen", style="cyan", no_wrap=True)
-            new_table.add_column("Identifier (UUID)", style="magenta")
-            new_table.add_column("Name / Friendly", style="green")
-            new_table.add_column("Sightings", justify="center", style="yellow")
-            new_table.add_column("Last Seen", style="cyan", no_wrap=True)
+                # The crash usually happens right here during the 'await'
+                devices = await BleakScanner.discover(timeout=2.0)
+                current_ts = datetime.now().strftime("%H:%M:%S")
 
-            for uid, info in GLOBAL_HISTORY.items():
-                new_table.add_row(
-                    info["first_seen"],
-                    uid,
-                    f"{info['name']} ({info['manuf']})",
-                    str(info["sighting_count"]),
-                    info["last_seen"]
-                )
+                for d in devices:
+                    uid = d.address
+                    name = str(d.name) if d.name else "Unknown"
 
-            live.update(new_table)
-            await asyncio.sleep(0.5)
+                    if uid not in GLOBAL_HISTORY:
+                        GLOBAL_HISTORY[uid] = {
+                            "name": name,
+                            "manuf": get_hardcoded_manuf_name(name),
+                            "first_seen": current_ts,
+                            "last_seen": current_ts,
+                            "sighting_count": 1
+                        }
+                    else:
+                        GLOBAL_HISTORY[uid]["last_seen"] = current_ts
+                        GLOBAL_HISTORY[uid]["sighting_count"] += 1
 
-    console.print(f"\n[bold green]✔[/bold green] Intelligence collection complete.")
-    input("Press Enter to return to menu...")
+                # UI Update logic
+                new_table = Table(title=title, border_style="bright_black")
+                new_table.add_column("First Seen", style="cyan")
+                new_table.add_column("Identifier", style="magenta")
+                new_table.add_column("Name", style="green")
+                new_table.add_column("Sightings", justify="center")
+                new_table.add_column("Last Seen", style="cyan")
+
+                for uid, info in GLOBAL_HISTORY.items():
+                    new_table.add_row(
+                        info["first_seen"], uid, info["name"],
+                        str(info["sighting_count"]), info["last_seen"]
+                    )
+
+                live.update(new_table)
+                await asyncio.sleep(0.5)
+
+    except (asyncio.CancelledError, KeyboardInterrupt):
+        # This catch is what prevents the crash and allows the data to stay in memory
+        console.print("\n[bold yellow]![/bold yellow] Interrupted. Closing scanner and saving intelligence...")
+
+    # This code will now actually run after Ctrl+C
+    console.print(f"\n[bold green]✔[/bold green] Intelligence retained. {len(GLOBAL_HISTORY)} targets in memory.")
+    time.sleep(1) # Brief pause so the user sees the message
 
 async def main_loop():
     while True:
