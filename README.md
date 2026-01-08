@@ -8,7 +8,7 @@ Go to `Privacy & Security > Bluetooth.`
 
 #### Getting Started
 ```shell
-source .venv/bin/activate
+source .venv/bin/activate``
 pip install asyncio bleak rich manuf bluetooth-numbers geocoder
 python3 bluesnoop.py
 ```
