@@ -30,23 +30,22 @@ async def run_scanner(duration=None):
             if duration:
                 elapsed = time.time() - start_time
                 if elapsed >= duration: break
-                title = f"📡 Timed Snoop: {int(duration - elapsed)}s remaining"
+                title = f"\n📡 Timed Snoop: {int(duration - elapsed)}s remaining"
             else:
-                title = "📡 Limitless Snoop (Ctrl+C to Stop)"
+                title = "\n📡 Limitless Snoop (Ctrl+C to Stop)"
 
             devices = await BleakScanner.discover(timeout=2.0)
 
             new_table = Table(title=title)
-            new_table.add_column("Idx", style="cyan")
+            new_table.add_column("ID", style="cyan")
             new_table.add_column("UUID Identifier", style="magenta")
             new_table.add_column("Name", style="green")
             new_table.add_column("Manuf", style="yellow")
-            new_table.add_column("RSSI", justify="right")
 
             for index, d in enumerate(devices):
                 new_table.add_row(
                     str(index), d.address, str(d.name),
-                    get_hardcoded_manuf_name(d.name), f"{d.rssi} dBm"
+                    get_hardcoded_manuf_name(d.name), f"<sRSSI> dBm"
                 )
 
             live.update(new_table)

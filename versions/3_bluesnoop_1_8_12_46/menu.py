@@ -16,7 +16,7 @@ def display_banner():
         banner_content = "BLUETOOTH SNOOPER\n[File banner.txt not found]"
 
     banner_text = Text(banner_content, style="bold cyan")
-    console.print(Align.center(Panel(banner_text, subtitle="v1.0 - Signal Intelligence Tool")))
+    console.print(Align.center(Panel(banner_text, subtitle="Bluetooth SIGINT Utility - v0.0.1", subtitle_align="right")))
 
 def show_about_screen():
     about_text = """
@@ -33,7 +33,7 @@ def show_about_screen():
     input("\nPress Enter to return to menu...")
 
 def print_menu_options():
-    console.print("[bold]1.[/bold] ⏱️  Timed Snoop (30 Seconds)")
-    console.print("[bold]2.[/bold] ♾️  Limitless Snoop")
-    console.print("[bold]3.[/bold] ℹ️  About")
-    console.print("[bold]4.[/bold] ❌ Quit")
+    console.print("[bold]1.[/bold]  Timed Snoop")
+    console.print("[bold]2.[/bold]  Limitless Snoop")
+    console.print("[bold]3.[/bold]  About")
+    console.print("[bold]4.[/bold]  Quit")
