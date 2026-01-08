@@ -7,6 +7,8 @@ from bleak import BleakScanner
 from rich.console import Console
 from rich.table import Table
 from rich.live import Live
+from bluetooth_numbers import oui
+from uuid import UUID
 
 # Import from your menu module
 from menu import display_banner, show_about_screen, print_menu_options, get_snoop_time, show_history_menu
@@ -75,6 +77,14 @@ async def run_scanner(duration=None):
                 devices = await BleakScanner.discover(timeout=2.0)
                 current_ts = datetime.now().strftime("%H:%M:%S")
 
+                manuf_data = d.metadata.get('manufacturer_data', {})
+
+                if manuf_data:
+                    # The keys in this dict are the SIG Company IDs
+                    company_ids = list(manuf_data.keys())
+                    # Example: 76 = Apple, 117 = Samsung, 6 = Microsoft
+                    print(f"Device {d.address} is from Company ID: {company_ids[0]}")
+
                 for d in devices:
                     uid = d.address
                     name = str(d.name) if d.name else "Unknown"
@@ -98,11 +108,19 @@ async def run_scanner(duration=None):
                 new_table.add_column("Name", style="green")
                 new_table.add_column("Sightings", justify="center")
                 new_table.add_column("Last Seen", style="cyan")
+                new_table.add_column("Target Manuf", style="yellow")
+
+                try:
+                    manufacturer = oui[UUID(name)]
+                    print(f"Target identified: {manufacturer}")
+                except KeyError:
+                    manufacturer = "Unknown"
 
                 for uid, info in GLOBAL_HISTORY.items():
                     new_table.add_row(
                         info["first_seen"], uid, info["name"],
-                        str(info["sighting_count"]), info["last_seen"]
+                        str(info["sighting_count"]), info["last_seen"],
+                        manufacturer
                     )
 
                 live.update(new_table)
