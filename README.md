@@ -15,8 +15,8 @@ A simple Bluetooth Low Energy (BLE) sniffer using Python and the Bleak library
 
 <table>
   <tr>
-    <td valign="top"><img src="https://github.com/ANG13T/fly-catcher/blob/main/assets/asset_1?raw=true" alt="Gallery Image" height="180" width="250"> <h4 align="center">Timed Snoop</h4></td>
-    <td valign="top"><img src="https://github.com/ANG13T/fly-catcher/blob/main/assets/asset_2?raw=true" alt="Gallery Image" height="180" width="250"> <h4 align="center">Limitless Snoop</h4></td>
+    <td valign="top"><img src="https://github.com/ANG13T/bluesnoop/blob/main/assets/asset_1?raw=true" alt="Gallery Image" height="180" width="250"> <h4 align="center">Timed Snoop</h4></td>
+    <td valign="top"><img src="https://github.com/ANG13T/bluesnoop/blob/main/assets/asset_2?raw=true" alt="Gallery Image" height="180" width="250"> <h4 align="center">Limitless Snoop</h4></td>
   </tr>
 </table>
 
@@ -28,7 +28,7 @@ Open System Settings (or System Preferences).
 Go to `Privacy & Security > Bluetooth` and *Grant Access* to **iTerm2**.
 
 ```shell
-
+python -m venv .venv
 source .venv/bin/activate
 pip install asyncio bleak rich manuf bluetooth-numbers geocoder
 python3 bluesnoop.py
