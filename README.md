@@ -11,15 +11,25 @@ A simple Bluetooth Low Energy (BLE) sniffer using Python and the Bleak library
 - Translation of cryptic model IDs
 - Export intelligence for external analysis
 
+## Demo Gallery 
+
+<table>
+  <tr>
+    <td valign="top"><img src="https://github.com/ANG13T/fly-catcher/blob/main/assets/asset_1?raw=true" alt="Gallery Image" height="180" width="250"> <h4 align="center">Timed Snoop</h4></td>
+    <td valign="top"><img src="https://github.com/ANG13T/fly-catcher/blob/main/assets/asset_2?raw=true" alt="Gallery Image" height="180" width="250"> <h4 align="center">Limitless Snoop</h4></td>
+  </tr>
+</table>
+
 ## Getting Started
 
 #### Grant Bluetooth Permissions
-Since you are using iTerm2, you need to ensure the terminal itself has permission to "snoop" on Bluetooth.
+If you are using iTerm2, you need to ensure the terminal itself has permission to Bluetooth.
 Open System Settings (or System Preferences).
-Go to `Privacy & Security > Bluetooth.`
+Go to `Privacy & Security > Bluetooth` and *Grant Access* to **iTerm2**.
 
 ```shell
-source .venv/bin/activate``
+
+source .venv/bin/activate
 pip install asyncio bleak rich manuf bluetooth-numbers geocoder
 python3 bluesnoop.py
 ```
