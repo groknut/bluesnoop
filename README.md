@@ -1,9 +1,12 @@
-<p align="center">
-  <img align="center" alt="DroneXtract logo" width="600" src="https://github.com/ANG13T/bluesnoop/blob/main/assets/asset_0.png">
-</p>
+
 
 # bluesnoop
-A simple Bluetooth Low Energy (BLE) sniffer using Python and the Bleak library
+<p align="center">
+  <img align="center" alt="DroneXtract logo" width="600" src="./assets/logo.png">
+</p>
+
+A simple Bluetooth Low Energy (BLE) sniffer using Python and the Bleak library. \
+Main repository: [Bluesnoop](https://github.com/ANG13T/bluesnoop)
 
 ## Features 
 - Identify nearby device UUIDs and names
@@ -13,35 +16,34 @@ A simple Bluetooth Low Energy (BLE) sniffer using Python and the Bleak library
 
 ## Demo Gallery 
 
-<table>
-  <tr>
-    <td valign="top"><img src="https://github.com/ANG13T/bluesnoop/blob/main/assets/asset_1.png?raw=true" alt="Gallery Image" height="300" width="600"> <h4 align="center">Timed Snoop</h4></td>
-  </tr>
-  <tr>
-    <td valign="top"><img src="https://github.com/ANG13T/bluesnoop/blob/main/assets/asset_2.png?raw=true" alt="Gallery Image" height="300" width="600"> <h4 align="center">Limitless Snoop</h4></td>
-  </tr>
-</table>
+### Timed Snoop
+<p align=center>
+<img src="./assets/demo_1.png" alt="Gallery Image" height="300" width="600"> 
+</p>
+
+### Limitless Snoop
+<p align=center>
+<img src="./assets/demo_2.png" alt="Gallery Image" height="300" width="600">
+</p>
 
 ## Getting Started
 
 #### Grant Bluetooth Permissions
-If you are using iTerm2, you need to ensure the terminal itself has permission to Bluetooth.
-Open System Settings (or System Preferences).
+If you are using iTerm2, you need to ensure the terminal itself has permission to Bluetooth. \
+Open System Settings (or System Preferences). \
 Go to `Privacy & Security > Bluetooth` and *Grant Access* to **iTerm2**.
 
-```shell
-python -m venv .venv
-source .venv/bin/activate
-pip install asyncio bleak rich manuf bluetooth-numbers geocoder
-python3 bluesnoop.py
+```bash
+uv sync
+uv run bluesnoop.py
 ```
 
 ## Contributing
 bluesnoop is open to any contributions. Please fork the repository and make a pull request with the features or fixes you want to be implemented.
 
 ## Upcoming
-<details>
-  <summary>Interpreting Bluetooth UUID && OUID Numbers </summary>
+
+### Interpreting Bluetooth UUID && OUID Numbers
   
 - Use a public OUI database (like the IEEE OUI list) to map MAC address prefixes to manufacturers.
 - You can find the OUI database here: https://standards-oui.ieee.org
@@ -57,18 +59,17 @@ In a standard UUID, the first digit of the third group (e.g., xxxx-xxxx-**N**xxx
 
 Looking at your data:
 
-D5D93B6E-C324-**F**D7B... -> The version digit is F.
+`D5D93B6E-C324-**F**D7B...` -> The version digit is `F`.
 
-6ADBBD89-CBFF-**0**FE8... -> The version digit is 0.
+`6ADBBD89-CBFF-**0**FE8...` -> The version digit is `0`.
 
 Since F and 0 are not valid RFC 4122 versions (1-5), Python throws a ValueError: badly formed hexadecimal UUID string.
 
 
-Explore more on the following:
-`discovered_devices_and_advertisement_data` // https://bleak.readthedocs.io/en/latest/api/scanner.html#bleak.BleakScanner.discovered_devices // 16:20 @ 1/8/26 BW
-</details>
+Explore more on the following: \
+[`discovered_devices_and_advertisement_data`](https://bleak.readthedocs.io/en/latest/api/scanner.html#bleak.BleakScanner.discovered_devices) // 16:20 @ 1/8/26 BW
 
 ## Support
-If you enjoyed bluesnoop, please consider [becoming a sponsor](https://github.com/sponsors/ANG13T) in order to fund my future projects. 
+If you enjoyed bluesnoop, please consider [becoming a sponsor](https://github.com/sponsors/ANG13T) in order to fund future projects. 
 
-To check out my other works, visit my [GitHub profile](https://github.com/ANG13T).
+To check out ANG13T other works, visit [GitHub profile](https://github.com/ANG13T).
