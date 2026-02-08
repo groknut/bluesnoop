@@ -136,10 +136,9 @@ async def main():
         except (EOFError):
             break
 
-
-
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        console.print("[bold yellow]! Interrupted[/bold yellow]")
+        console.clear()
+        console.print("[bold yellow]! bluesnoop Interrupted[/bold yellow]")
