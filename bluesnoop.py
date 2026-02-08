@@ -2,31 +2,41 @@ import asyncio
 import time
 import json
 import csv
-import geocoder # New dependency for location tracking
 from datetime import datetime
 from bleak import BleakScanner
 from rich.console import Console
 from rich.table import Table
 from rich.live import Live
-from uuid import UUID
 
 # Import from your menu module
 from menu import display_banner, show_about_screen, print_menu_options, get_snoop_time, show_history_menu
 
 console = Console()
 
-GLOBAL_HISTORY = {}
+FOUND_DEVICES = {}
 
-def get_gps_location():
-    """Fetches the current Lat/Lng of the device."""
-    try:
-        # Uses IP-based geolocation (works on most devices with internet)
-        g = geocoder.ip('me')
-        if g.latlng:
-            return f"{g.latlng[0]}, {g.latlng[1]}"
-        return "Unknown"
-    except Exception:
-        return "Unavailable"
+def detect_call(device, ad_data):
+
+    uid = device.address
+    name = ad_data.local_name or device.name or "Unknown"
+    rssi = ad_data.rssi
+    current_ts = datetime.now().strftime("%H:%M:%S")
+
+    if uid not in FOUND_DEVICES:
+        FOUND_DEVICES[uid] = {
+            "name": name,
+            "first_seen": current_ts,
+            "last_seen": current_ts,
+            "rssi": rssi,
+            "sighting_count": 1
+        }
+    else:
+        FOUND_DEVICES[uid]["last_seen"] = current_ts
+        FOUND_DEVICES[uid]["sighting_count"] += 1
+        FOUND_DEVICES[uid]["rssi"] = rssi
+        
+        if FOUND_DEVICES[uid]['name'] == "Unknown" and name != "Unknown":
+            FOUND_DEVICES[uid]['name'] = name
 
 def export_data(session_data):
     """Handles exporting the tracked devices including GPS data."""
@@ -47,8 +57,7 @@ def export_data(session_data):
         console.print(f"[green]Saved to {filename}[/green]")
     elif choice == "2":
         filename = f"snoop_report_{timestamp}.csv"
-        # Added 'location' to keys
-        keys = ["uuid", "name", "first_seen", "last_seen", "location", "sighting_count"]
+        keys = ["uuid", "name", "first_seen", "last_seen", "rssi", "sighting_count"]
         with open(filename, "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=keys)
             writer.writeheader()
@@ -61,90 +70,76 @@ def export_data(session_data):
 
 async def run_scanner(duration=None):
     start_time = time.time()
-    table = Table()
+    scanner = BleakScanner(detect_call)
+ 
+    title = "\n🦉 BLUESNOOP | LIMITLESS (Ctrl+C to stop)"
 
     try:
-        with Live(table, refresh_per_second=1, screen=True) as live:
+        with Live(refresh_per_second=1, screen=True) as live:
+            await scanner.start()
             while True:
                 if duration:
                     elapsed = time.time() - start_time
+                    title = f"\n🦉 BLUESNOOP | TIMED: {int(duration - elapsed)}s left"
                     if elapsed >= duration:
                         break
-                    title = f"\n🦉 BLUESNOOP | TIMED: {int(duration - elapsed)}s left"
-                else:
-                    title = "\n🦉 BLUESNOOP | LIMITLESS (Ctrl+C to stop)"
+    
+                table = Table(title=title, border_style="bright_black")
+                table.add_column("Identifier", style="magenta")
+                table.add_column("Name", style="green")
+                table.add_column("RSSI", style="magenta")
+                table.add_column("Sightings", justify="center")
+                table.add_column("First Seen", style="cyan")
+                table.add_column("Last Seen", style="cyan")
 
-                devices = await BleakScanner.discover(timeout=2.0)
-                current_ts = datetime.now().strftime("%H:%M:%S")
-                # Fetch location once per scan cycle to minimize API calls
-                current_loc = get_gps_location()
-
-                for d in devices:
-                    uid = d.address
-                    name = str(d.name) if d.name else "Unknown"
-
-                    if uid not in GLOBAL_HISTORY:
-                        GLOBAL_HISTORY[uid] = {
-                            "name": name,
-                            "first_seen": current_ts,
-                            "last_seen": current_ts,
-                            "location": current_loc, # Store initial discovery location
-                            "sighting_count": 1
-                        }
-                    else:
-                        GLOBAL_HISTORY[uid]["last_seen"] = current_ts
-                        GLOBAL_HISTORY[uid]["location"] = current_loc # Update to current location
-                        GLOBAL_HISTORY[uid]["sighting_count"] += 1
-
-                # UI Update logic
-                new_table = Table(title=title, border_style="bright_black")
-                new_table.add_column("First Seen", style="cyan")
-                new_table.add_column("Identifier", style="magenta")
-                new_table.add_column("Name", style="green")
-                new_table.add_column("Location (Lat, Lng)", style="yellow") # Added Column
-                new_table.add_column("Sightings", justify="center")
-                new_table.add_column("Last Seen", style="cyan")
-
-                for uid, info in GLOBAL_HISTORY.items():
-                    new_table.add_row(
-                        info["first_seen"],
+                for uid, info in FOUND_DEVICES.items():
+                    table.add_row(
                         uid,
-                        info["name"],
-                        info["location"],
+                        info['name'],
+                        str(info['rssi']),
                         str(info["sighting_count"]),
-                        info["last_seen"],
+                        info['first_seen'],
+                        info['last_seen']
                     )
-
-                live.update(new_table)
+                live.update(table)
                 await asyncio.sleep(0.5)
 
     except (asyncio.CancelledError, KeyboardInterrupt):
+        await scanner.stop()
         console.print("\n[bold yellow]![/bold yellow] Interrupted. Closing scanner and saving intelligence...")
 
-    console.print(f"\n[bold green]✔[/bold green] Intelligence retained. {len(GLOBAL_HISTORY)} targets in memory.")
+    console.print(f"\n[bold green]✔[/bold green] Intelligence retained. {len(FOUND_DEVICES)} targets in memory.")
     # Trigger export automatically or wait for menu return
-    export_data(GLOBAL_HISTORY)
+    export_data(FOUND_DEVICES)
     time.sleep(1)
 
-async def main_loop():
+async def main():
     while True:
         console.clear()
         display_banner()
         print_menu_options()
+        try:
+            choice = console.input("\n[bold cyan]Select Option > [/bold cyan]")
 
-        choice = console.input("\n[bold cyan]Select Option > [/bold cyan]")
-
-        if choice == "1":
-            t = get_snoop_time()
-            await run_scanner(duration=t)
-        elif choice == "2":
-            await run_scanner(duration=None)
-        elif choice == "3":
-            show_history_menu(GLOBAL_HISTORY)
-        elif choice == "4":
-            show_about_screen()
-        elif choice == "5":
+            if choice == "1":
+                t = get_snoop_time()
+                await run_scanner(duration=t)
+            elif choice == "2":
+                await run_scanner(duration=None)
+            elif choice == "3":
+                show_history_menu(FOUND_DEVICES)
+            elif choice == "4":
+                show_about_screen()
+            elif choice == "5":
+                break
+        
+        except (EOFError):
             break
 
+
+
 if __name__ == "__main__":
-    asyncio.run(main_loop())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        console.print("[bold yellow]! Interrupted[/bold yellow]")
