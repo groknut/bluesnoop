@@ -1,3 +1,4 @@
+
 import asyncio
 import time
 import json
@@ -9,14 +10,13 @@ from rich.table import Table
 from rich.live import Live
 
 # Import from your menu module
-from menu import display_banner, show_about_screen, print_menu_options, get_snoop_time, show_history_menu
+from menu import display_banner, show_about_screen, print_menu_options, get_snoop_time, show_history_menu, export_intel
 
 console = Console()
 
 FOUND_DEVICES = {}
 
 def detect_call(device, ad_data):
-
     uid = device.address
     name = ad_data.local_name or device.name or "Unknown"
     rssi = ad_data.rssi
@@ -48,23 +48,12 @@ def export_data(session_data):
     console.print("1. JSON | 2. CSV | 3. Skip")
     choice = console.input("Select format: ").strip()
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
     if choice == "1":
-        filename = f"snoop_report_{timestamp}.json"
-        with open(filename, "w") as f:
-            json.dump(session_data, f, indent=4)
-        console.print(f"[green]Saved to {filename}[/green]")
+        export_intel(session_data, "json")
+
     elif choice == "2":
-        filename = f"snoop_report_{timestamp}.csv"
-        keys = ["uuid", "name", "first_seen", "last_seen", "rssi", "sighting_count"]
-        with open(filename, "w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=keys)
-            writer.writeheader()
-            for uuid, data in session_data.items():
-                row = {"uuid": uuid, **data}
-                writer.writerow(row)
-        console.print(f"[green]Saved to {filename}[/green]")
+        export_intel(session_data, "csv")
+
     else:
         console.print("[yellow]Export skipped.[/yellow]")
 
