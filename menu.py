@@ -1,15 +1,16 @@
-import os
+
 import json
 import csv
 import time
 from datetime import datetime
 from rich.console import Console
 from rich.panel import Panel
-from rich.align import Align
 from rich.text import Text
 from rich.table import Table
+from pathlib import Path
 
 console = Console()
+main_path = Path(__file__).parent
 
 # --- HISTORY & EXPORT LOGIC ---
 
@@ -31,9 +32,16 @@ def display_history_table(data):
     console.print(table)
     input("\nPress Enter to return to History Menu...")
 
-def export_intel(data, format_type):
+def export_intel(data: json, format_type: str, isDump: bool = False):
+
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"BLUESNOOP_DUMP_{ts}.{format_type}"
+    report_path = main_path / "reports"
+    report_path.mkdir(exist_ok=True)
+
+    if isDump:
+        filename = report_path / f"BLUESNOOP_DUMP_{ts}.{format_type}"
+    else:
+        filename = report_path / f"snoop_report__{ts}.{format_type}"
 
     if format_type == "json":
         with open(filename, "w") as f:
@@ -41,12 +49,24 @@ def export_intel(data, format_type):
     else:
         # CSV Export Logic
         with open(filename, "w", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(["UUID", "Name", "First Seen", "Last Seen"])
+            if not isDump:
+                keys = ["uid", "name", "first_seen", "last_seen", "rssi", "sighting_count"]
+                writer = csv.DictWriter(f, fieldnames=keys)
+                writer.writeheader()
+            else:
+                writer = csv.writer(f)
+                writer.writerow(["UUID", "Name", "First Seen", "Last Seen"])
+            
             for uid, info in data.items():
-                writer.writerow([uid, info['name'], info['first_seen'], info['last_seen']])
-
-    console.print(f"[bold green]✔[/bold green] Success: Intel exported to {filename}")
+                if isDump:
+                    writer.writerow([uid, info['name'], info['first_seen'], info['last_seen']])
+                else:
+                    row = {"uid": uid, **info}
+                    writer.writerow(row)
+    if isDump:
+        console.print(f"[bold green]✔[/bold green] Success: Intel exported to {filename}")
+    else:
+        console.print(f"[green]Saved to {filename}[/green]")
     time.sleep(2)
 
 def show_history_menu(history_data):
@@ -71,9 +91,9 @@ def show_history_menu(history_data):
         if sub_choice == "1":
             display_history_table(history_data)
         elif sub_choice == "2":
-            export_intel(history_data, "json")
+            export_intel(history_data, "json", True)
         elif sub_choice == "3":
-            export_intel(history_data, "csv")
+            export_intel(history_data, "csv", True)
         elif sub_choice == "4":
             break
 
