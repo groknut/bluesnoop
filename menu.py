@@ -114,9 +114,10 @@ def get_snoop_time():
 
 def show_about_screen():
     about_text = """
-    [bold cyan]BLUESNOOP v1.0.0[/bold cyan]
+    [bold cyan]BLUESNOOP v1.0.1[/bold cyan]
     Engineered by [bold]BL4Q W1DØW[/bold]
     GitHub: [underline blue]github.com/ANG13T/bluesnoop[/underline blue]
+    Fork: [underline blue]github.com/groknut/bluesnoop[/underline blue]
     
     A lightweight TUI Bluetooth SIGINT utility
     
