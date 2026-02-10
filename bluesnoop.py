@@ -4,7 +4,7 @@ import time
 import json
 import csv
 from datetime import datetime
-from bleak import BleakScanner
+from bleak import BleakScanner, exc
 from rich.console import Console
 from rich.table import Table
 from rich.live import Live
@@ -112,9 +112,19 @@ async def main():
 
             if choice == "1":
                 t = get_snoop_time()
-                await run_scanner(duration=t)
+                try:
+                    await run_scanner(duration=t)
+                except exc.BleakBluetoothNotAvailableError:
+                    console.clear()
+                    console.print("[bold red]Bluetooth not available![/bold red]")
+                    time.sleep(3)
             elif choice == "2":
-                await run_scanner(duration=None)
+                try:
+                    await run_scanner()
+                except exc.BleakBluetoothNotAvailableError:
+                    console.clear()
+                    console.print("[bold red]Bluetooth not available![/bold red]")
+                    time.sleep(3)
             elif choice == "3":
                 show_history_menu(FOUND_DEVICES)
             elif choice == "4":
